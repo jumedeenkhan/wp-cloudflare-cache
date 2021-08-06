@@ -6,8 +6,6 @@ Description:  Use Cloudflare full page cache and improve your site performance.
 Version:      1.0.1
 Author:       Jumedeen Khan
 Author URI:   https://www.mozedia.com/
-License:      GPLv2 or later
-License URI:  http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain:  wp-cloudflare-cache
 Domain Path:  /languages
 */
