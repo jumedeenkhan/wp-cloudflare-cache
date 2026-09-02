@@ -5,7 +5,7 @@ Donate link: https://www.paypal.me/jumedeenkhan
 Requires at least: 4.0
 Tested up to: 5.3
 Requires PHP: 5.6
-Stable tag: 1.0.1
+Stable tag: 1.0.0
 
 WP Cloudflare cache plugin build for control cloudflare cache and purge only single page cache when post publish, updated and new comment are added.
 
