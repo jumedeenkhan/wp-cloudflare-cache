@@ -1,27 +1,51 @@
 <?php
+/**
+ * Plugin Name:   WP Cloudflare Cache
+ * Plugin URI:    https://www.mozedia.com/
+ * Description:   WP Cloudflare Cache built for cache HTML Pages on Cloudflare free plan and purge cache only when post or page updated.
+ * Version:       1.2
+ * Author:        Jumedeen Khan
+ * Author URI:    https://www.mozedia.com/about
+ * Text Domain:   wp-cloudflare-cache
+ * Domain Path:   /languages
+ * License: GPLv3
+ * License URI: http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) exit;
+	
+// Plugin name
+define( 'WPCC_NAME', 'WP Cloudflare Cache' );
+
+// Plugin version
+define( 'WPCC_VERSION',		'1.2' );
+
+// Plugin Root File
+define( 'WPCC_PLUGIN_FILE',	__FILE__ );
+
+// Plugin base
+define( 'WPCC_PLUGIN_BASE',	plugin_basename( WPCC_PLUGIN_FILE ) );
+
+// Plugin Folder Path
+define( 'WPCC_PLUGIN_DIR',	plugin_dir_path( WPCC_PLUGIN_FILE ) );
+
+// Plugin Folder URL
+define( 'WPCC_PLUGIN_URL',	plugin_dir_url( WPCC_PLUGIN_FILE ) );
+
+
 /*
-Plugin Name:  WP Cloudflare Cache
-Plugin URI:   https://www.mozedia.com/cloudflare-cache-everything/
-Description:  Use Cloudflare full page cache and improve your site performance.
-Version:      1.0.1
-Author:       Jumedeen Khan
-Author URI:   https://www.mozedia.com/
-Text Domain:  wp-cloudflare-cache
-Domain Path:  /languages
-*/
+ * Load the main class for the core functionality
+ */
+require_once WPCC_PLUGIN_DIR . 'core/class-wp-cloudflare-cache.php';
 
-//* Quit files
-defined('ABSPATH') || exit;
+/**
+ * Run the main function
+ */
 
-define('WPCC_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('WPCC_PLUGIN_BASENAME', plugin_basename(__FILE__));
-
-//* Load WP Cloudflare Cache plugin class
-require_once(WPCC_PLUGIN_DIR . '/lib/class-wp-cloudflare-cache.php');
-
-// Load plugin script and style css
-add_action('admin_enqueue_scripts', 'wpcc_register_scripts_styles');
-function wpcc_register_scripts_styles() {
-    wp_enqueue_style('toggle-script', plugins_url('/css/wpcc-style.css', __FILE__));
-    wp_enqueue_script('toggle-script', plugins_url('/js/toggle-script.js', __FILE__));
+function wpcc_cloudflare_cache_run() {
+	
+	$wpcc_cache = new WP_Cloudflare_Cache();
 }
+
+wpcc_cloudflare_cache_run();
