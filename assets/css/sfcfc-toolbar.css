@@ -1,0 +1,10 @@
+/**
+ * Kept separate from sfcfc-admin.css so pages without the settings UI still get this
+ * admin bar icon without loading the whole stylesheet.
+ */
+#wp-admin-bar-sfcfc-purge-button .ab-icon:before {
+    content: "\f176";
+    top: 2px;
+    color: #f6821f;
+    cursor: pointer;
+}

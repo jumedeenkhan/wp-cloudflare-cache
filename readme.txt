@@ -1,198 +1,229 @@
-=== WP Cloudflare Cache ===
-Contributors: jumedeenkhan
+=== SuperFlare Cache – Cloudflare Full-Page Cache & CDN Optimization ===
+Contributors: jumedeenkhan, mozedia
 Tags: cloudflare, cache, pagespeed, performance, cdn
 Donate link: https://buymeacoffee.com/jumedeenkhan
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Speed up your WordPress website via Cloudflare CDN with full-page caching – improve SEO, and overall performance.
+Speed up your WordPress website with Cloudflare CDN, full-page cache & auto purge. Optimize Page Speed, SEO, performance and Core Web Vitals.
 
 == Description ==
 
-WP Cloudflare Cache adds real full-page caching to your WordPress site using a Cloudflare Cache Rule — including on the Cloudflare Free plan.
+SuperFlare Cache plugin allows you to use **Cloudflare Full-Page Cache** for free and safely bypass logged-in users, admin requests, and anything else you don't want to cache.
 
-It automatically creates and manages a single Cache Rule that caches your public pages while safely bypassing logged-in users, comment authors, password-protected pages, WordPress admin requests, and any URLs you exclude.
+Normally, Cloudflare only caches static assets (e.g., CSS, JavaScript, and images), while every visitor to your HTML pages still hits your hosting server directly.
 
-When content changes, the plugin purges only the affected URL instead of clearing your entire Cloudflare cache.
+SuperFlare Cache closes that gap with a single, self-managed Cloudflare Cache Rule that serves full pages directly from Cloudflare’s edge.
 
-= Key Features =
+No manual CDN configuration, no Cache Rules to create, and no guesswork. Works on the **Cloudflare Free plan** and scales with Pro, Business and Enterprise.
 
-* Full-page HTML caching with a single Cloudflare Cache Rule.
-* Works with the Cloudflare Free plan.
-* Bypasses logged-in users, comment authors, and password-protected pages at Cloudflare's edge.
-* Automatically excludes WordPress admin and login requests.
-* Selective cache purging when posts, pages, or comments change.
-* Optional homepage and Custom Purge URLs.
-* Cache Exclude URLs for paths such as `/cart/` and `/checkout/`.
-* Separate Browser Cache TTL and Edge Cache TTL controls.
-* Cache-Control `max-age` and `s-maxage` controls.
-* Optional bypass for `sitemap.xml` and `robots.txt`.
-* Connect using a scoped API Token or Global API Key.
-* Automatically loads available Cloudflare domains.
-* Warns when the selected domain is not proxied through Cloudflare.
-* One-click Purge All Cache, Purge Latest Post, and Reset Settings.
-* Automatically migrates saved credentials from older versions.
+= Full-page caching, done safely =
 
-= Why use WP Cloudflare Cache? =
+* One **Cloudflare Cache Rule** handles full-page caching — **no manual dashboard setup required**.
+* The Cache Rule stays **automatically synchronized** with your settings, creating, updating, or removing the rule as needed.
+* Only manages its own rule — existing Cache Rules on your zone are preserved and never reordered or overwritten.
+* Automatically **bypasses logged-in users, comment authors, and password-protected pages** at Cloudflare's edge.
+* Skips caching for **non-2xx responses (redirects and errors)** so temporary error pages are never served from cache.
 
-By default, Cloudflare mainly caches static assets such as CSS, JavaScript, and images. Your WordPress HTML pages may still reach your server.
+= Cache Control & Exclusions =
 
-WP Cloudflare Cache creates a Cache Rule that allows Cloudflare to cache eligible public pages while keeping requests that must remain dynamic outside the cache.
+* Separate **Browser Cache TTL** and **Edge Cache TTL** controls, plus Cloudflare's Caching Level setting.
+* Exclude entire page types from caching, including the front page, posts page, archives, feeds, search results, 404s, and AMP pages.
+* Bypass **AJAX** (admin-ajax.php), **REST API** (wp-json), sitemap.xml, robots.txt, and URLs with query strings.
+* Exclude cookies (e.g. WooCommerce/EDD cart cookies) and custom URL parameters from the cache key.
+* Exclude specific URLs such as `/cart/` or `/checkout/`, with wildcard support.
 
-Instead of purging your entire cache whenever content changes, only the affected URL is purged. Other cached pages remain available from Cloudflare.
+= Purging =
 
-= How it works =
+* **Selective purging**: only the changed URL is purged when a post, page, or comment is updated — keeping the rest of your cache warm.
+* Optional purging of the homepage, archive pages, feeds, and AMP URLs alongside the affected post.
+* **Automatic full purge** after a theme or plugin update.
+* **Custom Purge URLs** for anything the automatic rules don't cover.
+* Purges are queued and processed by a single coalesced cron job, reducing API requests during bulk edits and helping avoid Cloudflare rate limits.
+* **Remote Purge** via a secret Cron URL for triggering purges from outside WP-Cron.
+* Role-based permissions control who can purge the cache.
+* One-click Purge **Latest Post**, **Custom Purge**, and **Purge Entire Cache** from the Quick Actions panel.
 
-1. Connect your Cloudflare account using an API Token or Global API Key.
-2. Select your domain.
-3. Save your settings.
-4. The plugin automatically creates and manages the required Cloudflare Cache Rule.
+= Preloader =
 
-No manual Cache Rule configuration is required.
+* Automatically **re-warms the cache after a purge** so visitors don't hit a cold page.
+* Optional **scheduled preloading** of your latest posts and any sitemaps you list, on a cron schedule you control.
+* "Run Preloader Now" for an on-demand warm-up.
+
+= Cloudflare Optimization =
+
+Toggle **Cloudflare's performance, protocol, and security features** directly from WordPress: Always Online, Early Hints, Crawler Hints, Rocket Loader, IPv6 Compatibility, TLS 1.3, HTTP/3 (with QUIC), 0-RTT Connection Resumption, Browser Integrity Check, IP Geolocation, and Hotlink Protection.
+
+= Visibility & Control =
+
+* Dashboard with **live cache status**, connection status, and quick actions.
+* **Activity Log** of purge and cache events, with optional Debug/Logging mode for troubleshooting.
+* Import/Export your settings between sites, plus one-click Reset Settings to safe defaults.
+* Uninstalling removes all plugin data by default; a "Keep Data on Uninstall" toggle lets you preserve settings and credentials for next time.
+
+= How Does the Plugin Work? =
+
+1. Connect your Cloudflare account using an **API Token** or **Global API Key**.
+2. Select your domain and finish the setup.
+3. Save your settings — that's it.
+
+The plugin creates and keeps the required Cloudflare Cache Rule in sync automatically — no manual Cache Rule configuration required.
 
 = API Token permissions =
 
-For the recommended API Token setup, grant the permissions required by the plugin:
+For the recommended API Token setup, grant:
 
-* Zone > Cache Purge
-* Zone > Cache Rules
-* Zone > Zone Settings
+* Zone > Zone > Read
+* Zone > Zone Settings > Edit
+* Zone > Cache Rules > Edit
+* Zone > Cache Purge > Purge
+* Zone > Analytics > Read
 
-You can also use a Global API Key.
+A Global API Key also works if you'd rather use that.
 
-= Upgrade from older versions =
+= SuperFlare Pro =
 
-Older versions used a Global API Key. Your saved Cloudflare credentials are migrated automatically when updating.
+Take Cloudflare caching further with SuperFlare Pro. Get advanced analytics, image optimization, advanced cache controls, performance optimizations, deeper WooCommerce/EDD controls, cache integrations, and priority email support.
 
-If your existing credentials cannot be verified, the plugin will display a notice asking you to reconnect Cloudflare.
+* **Advanced analytics** and Edge Cache Status.
+* **Image optimization** with automatic WebP delivery.
+* **Advanced Preloader** with sitemap, menu, and content discovery.
+* **Cache Reserve, Tiered Cache, and stale-while-revalidate.**
+* **Advanced purging** and cache integrations.
+* **Granular WooCommerce and EDD controls.**
+* **JavaScript optimization**, link prefetching, DNS prefetch, and preconnect.
+* **Heartbeat Control**, Server-Side Excludes, and marketing-parameter handling.
+* Sync with other caching plugins and host caches.
+* **Priority email support.**
 
-= More information =
+[Learn more about SuperFlare Pro](https://superflare.pro/)
 
-* [GitHub Repository](https://github.com/jumedeenkhan/wp-cloudflare-cache)
-* [Setup Guide](https://www.mozedia.com/cloudflare-cache-everything-for-wordpress/)
-* [Contact & Support](https://www.mozedia.com/contact/)
+= Need more information? =
+
+[Official Website](https://superflare.pro/) | [Documentation](https://superflare.pro/docs/) | [Contact & Support](https://superflare.pro/contact/) | [GitHub Repository](https://github.com/jumedeenkhan/wp-cloudflare-cache)
 
 == Installation ==
 
-1. Upload and activate **WP Cloudflare Cache** from the WordPress admin.
-2. Go to the plugin settings page.
+1. Upload and activate SuperFlare Cache from the WordPress admin.
+2. Go to the plugin's Setup Wizard.
 3. Connect Cloudflare using an API Token or Global API Key.
-4. Select your domain.
-5. Configure your cache settings and save.
+4. Select your domain and finish the setup.
+5. Review Cache Settings, Purge Cache, and Optimization to fit your site, then save.
 
-The required Cloudflare Cache Rule will be created automatically.
+The required Cloudflare Cache Rule is created and kept in sync automatically.
 
 == Frequently Asked Questions ==
 
-= Does this work with the Cloudflare Free plan? =
+= Does this plugin work with the Cloudflare Free plan? =
 
-Yes. The plugin uses a Cloudflare Cache Rule to enable full-page caching and is designed to work with the Cloudflare Free plan.
+Yes. The plugin uses a Cloudflare Cache Rule for full-page caching, which is available on the Free plan, and it's also works with Cloudflare premium plans.
 
-= Do I need to manually create a Cache Rule? =
+= Do I need to manually create or edit a Cache Rule? =
 
-No. The plugin automatically creates and updates the required Cache Rule when you save your settings.
+No. The plugin creates, updates, and removes its own Cache Rule automatically as needed — including when you disable Full-Page Caching, disconnect, or change the connected domain.
+
+= What happens if I delete the Cache Rule from my Cloudflare dashboard by mistake? =
+
+It comes back automatically the next time you save any setting on the plugin's Settings page, as long as Full-Page Caching is still turned on.
+
+= Will this ever touch other Cache Rules on my zone? =
+
+No. The plugin only ever creates, updates, or removes the single rule it manages, identified by its own description. Any other rules on the zone are left exactly as they are, in their original order.
 
 = Does the plugin cache logged-in users? =
 
 No. Logged-in users, comment authors, and password-protected pages are bypassed at Cloudflare's edge.
 
-= What happens when I update a post or page? =
-
-The affected URL is purged automatically. Optional homepage and Custom Purge URLs can also be purged.
-
 = Does the plugin purge my entire cache on every update? =
 
-No. Normal content updates use selective purging so unaffected cached pages can remain in the cache.
+No. Normal content updates use selective purging so unaffected cached pages stay in the cache. A full purge only happens after a theme/plugin update or when you trigger it manually.
 
-= Can I exclude specific URLs from caching? =
+= Can I exclude specific URLs, page types, or cookies from caching? =
 
-Yes. Add paths such as `/cart/` or `/checkout/` to Cache Exclude URLs.
+Yes — Cache Exclude URLs, Exclude by Page Type (front page, archives, search, 404s, feeds, AMP, and more), and cookie/query-parameter exclusions are all available on the Cache Settings tab.
 
-= Can I bypass sitemap.xml or robots.txt? =
+= Can I control Cloudflare features like Always Online or Rocket Loader from here? =
 
-Yes. Both `sitemap.xml` and `robots.txt` have separate bypass options.
+Yes, from the Optimization tab, without needing to log into the Cloudflare dashboard.
 
 = Should I use an API Token or Global API Key? =
 
-An API Token is recommended because it can be limited to only the permissions required by the plugin. A Global API Key also works.
+An API Token is recommended because it can be scoped to only the permissions the plugin needs. A Global API Key also works.
 
-= Will my existing settings work after upgrading? =
+= Do I still need a separate caching plugin, or a Redis/Nginx page cache? =
 
-Saved Cloudflare credentials from older versions are migrated automatically when possible.
+No — Cloudflare's edge is your full-page cache once this plugin is active, so a separate origin-level page cache is redundant and best turned off. An object cache (like Redis Object Cache) for database queries is unrelated and fine to keep running.
+
+= Is my Cloudflare API Token or Key stored securely? =
+
+Yes. Credentials are stored in your site's own database like any other WordPress setting, are never exposed on the front end, and are only sent to Cloudflare's API over HTTPS.
+
+= Does this work with WooCommerce or other e-commerce plugins? =
+
+Yes. Use the Exclude Cookies setting to bypass cart/session cookies (e.g. `woocommerce_*`) so carts, checkouts, and account pages are never served from cache.
+
+= What happens if Cloudflare's API is temporarily unreachable? =
+
+The plugin fails safely: it never overwrites or removes existing Cache Rules on a failed or unconfirmed API response, and your site keeps working normally either way.
+
+= Does deactivating the plugin affect my live Cloudflare cache? =
+
+Deactivating removes the managed Cache Rule from Cloudflare so caching stops immediately. Reactivating recreates it right away if you're already connected, and takes you back to Settings; otherwise it opens the Setup Wizard.
 
 == Screenshots ==
 
-1. WP Cloudflare Cache settings page.
-2. Cloudflare installation guide.
+1. SuperFlare Cache settings page.
+2. SuperFlare Cache dashboard with live analytics, and activity log.
+3. Cache Control and Exclusions settings.
+4. Cache Purging settings and options.
+5. Cloudflare CDN Optimization control.
+6. Cloudflare plugin Advanced settings.
+7. Cloudflare connection and API setup.
 
 == Upgrade Notice ==
 
-= 1.8.0 =
+= 2.0.0 =
 
-Fixes a duplicate-setting bug that ran Cloudflare sync twice per save, plus TTL label fixes.
-
-= 1.7.0 =
-
-Broader cookie/URL bypass matching for a more reliable cache. Update recommended.
-
-= 1.6.0 =
-
-Bug-fix release: settings save, cache purging, and permission checks. Update recommended.
-
-= 1.5.0 =
-
-Major update introducing Cloudflare Cache Rules, API Token authentication, edge-level cache bypass, TTL controls, Cache Exclude URLs, and improved security and settings management.
+Cache Rule reliability, security, and uninstall-behavior improvements, including a fix for Cache Rule creation failing on brand-new Cloudflare zones. Recommended update for all sites.
 
 == Changelog ==
 
+= 2.0.0 =
+
+* Improved Cloudflare Cache Rule reliability and automatic synchronization.
+* Improved cache bypass and security handling for admin, REST API, AJAX, and query-string requests.
+* Improved selective purging and reduced redundant Cloudflare API requests.
+* Fixed cache purging for permanently deleted posts.
+* Improved activation, deactivation, and uninstall behavior.
+* Improved Browser Cache TTL management through the Cache Rule.
+* General security, performance, and UI improvements.
+
 = 1.8.0 =
 
-* Fixed settings save running Cloudflare sync twice.
-* Fixed duplicate/incorrect Browser Cache TTL labels.
-* Fixed Reset Settings defaults to match actual defaults.
-* Improved code documentation.
+* Fixed duplicate Cloudflare syncs and Browser Cache TTL issues.
+* Fixed Reset Settings defaults and improved settings reliability.
 
 = 1.7.0 =
 
-* Broadened bypass cookies to "wordpress" and "comment_" prefixes.
-* Added /wp-json bypass.
+* Added broader cookie bypass support and REST API (/wp-json) bypass.
 
 = 1.6.0 =
 
-* Fixed settings save skipping sanitization.
-* Fixed purge on permanent post deletion.
-* Fixed apex domain detection for .co.uk/.com.au style TLDs.
-* Broadened sitemap bypass to WordPress core sitemaps.
-* Fixed deactivation erasing saved configuration.
-* Tightened Reset Settings permission check.
-* Fixed admin bar purge button and API Token show/hide toggle.
-* Prevented duplicate purge/reset requests.
-* Redesigned settings notices into a single popup and refreshed the UI.
+* Improved settings security, cache purging, domain detection, and Cloudflare request handling.
+* Fixed deactivation, reset, admin bar, and API Token issues.
+* Improved sitemap and cache bypass handling.
 
 = 1.5 =
 
-* Added Cloudflare API Token authentication alongside Global API Key support.
-* Added automatic Cloudflare domain selection.
-* Changed full-page caching from legacy Page Rules to a Cloudflare Cache Rule.
-* Added edge-level bypass for logged-in users, comment authors, and password-protected pages.
-* Added Browser Cache TTL and Edge Cache TTL controls.
-* Added Cache-Control `max-age` and `s-maxage` settings.
-* Added Cache Exclude URLs.
-* Added separate bypass options for `sitemap.xml` and `robots.txt`.
-* Added a warning when the selected domain is not proxied through Cloudflare.
-* Added connection status and Reset Settings.
-* Added automatic migration for saved credentials from older versions.
-* Improved selective cache purging.
-* Improved AJAX permission and nonce protection.
-* Fixed zone detection for apex domains.
-* Fixed settings sanitization and escaping issues.
-* Fixed PHP warnings caused by failed Cloudflare API or network requests.
-* Removed an unrelated filter that disabled the block editor.
-* Updated the license to GPLv2 or later.
+* Added Cloudflare API Token authentication and automatic domain selection.
+* Migrated full-page caching from Page Rules to Cloudflare Cache Rules.
+* Added logged-in user, cookie, URL, sitemap, and robots.txt cache exclusions.
+* Added Browser and Edge Cache TTL controls and improved cache purging.
+* Added connection status, Reset Settings, and improved security and error handling.
 
 = 1.2.1 =
 
@@ -200,17 +231,9 @@ Major update introducing Cloudflare Cache Rules, API Token authentication, edge-
 
 = 1.2 =
 
-* Added homepage purge.
-* Added Custom Purge URLs.
-* Added Purge Latest Post and Purge All Cache actions.
-* Added Page Rule creation.
-* Added Browser Cache TTL settings.
-* Added support for cache purging from the block editor.
-* Excluded search and 404 pages from caching.
-* Added cache purging for comment activity.
-* Improved compatibility with PHP 8.3.
-* Fixed compatibility issues with newer WordPress versions.
-* Tested up to WordPress 6.5.3.
+* Added homepage, custom URL, latest post, and full cache purge options.
+* Added Page Rule creation, Browser Cache TTL, and block-editor purge support.
+* Improved cache exclusions, comment purging, and WordPress compatibility.
 
 = 1.0.3 =
 
@@ -218,7 +241,7 @@ Major update introducing Cloudflare Cache Rules, API Token authentication, edge-
 
 = 1.0.1 =
 
-* Updated the `max-age` behavior for Cloudflare caching.
+* Updated max-age behavior for Cloudflare caching.
 
 = 1.0 =
 
