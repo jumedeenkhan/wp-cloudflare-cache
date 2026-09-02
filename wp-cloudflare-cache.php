@@ -1,51 +1,33 @@
 <?php
 /**
- * Plugin Name:   Cloudflare Page Cache for WordPress
+ * Plugin Name:   WP Cloudflare Cache
  * Plugin URI:    https://www.mozedia.com/
  * Description:   WP Cloudflare Cache built for cache HTML Pages on Cloudflare free plan and purge cache only when post or page updated.
- * Version:       1.2.1
+ * Version:       1.5.0
  * Author:        Jumedeen Khan
  * Author URI:    https://www.mozedia.com/about
  * Text Domain:   wp-cloudflare-cache
  * Domain Path:   /languages
- * License: GPLv3
- * License URI: http://www.gnu.org/licenses/gpl-3.0.html
+ * License: GPLv2 or later
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * @package CloudflareCache
  */
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) exit;
-	
-// Plugin name
-define( 'WPCC_NAME', 'WP Cloudflare Cache' );
 
-// Plugin version
-define( 'WPCC_VERSION',		'1.2.1' );
+define( 'CFCA_NAME', 'WP Cloudflare Cache' );
+define( 'CFCA_VERSION',		'1.5.0' );
+define( 'CFCA_PLUGIN_FILE',	__FILE__ );
+define( 'CFCA_PLUGIN_BASE',	plugin_basename( CFCA_PLUGIN_FILE ) );
+define( 'CFCA_PLUGIN_DIR',	plugin_dir_path( CFCA_PLUGIN_FILE ) );
+define( 'CFCA_PLUGIN_URL',	plugin_dir_url( CFCA_PLUGIN_FILE ) );
 
-// Plugin Root File
-define( 'WPCC_PLUGIN_FILE',	__FILE__ );
+require_once CFCA_PLUGIN_DIR . 'includes/class-cfca-cache.php';
 
-// Plugin base
-define( 'WPCC_PLUGIN_BASE',	plugin_basename( WPCC_PLUGIN_FILE ) );
-
-// Plugin Folder Path
-define( 'WPCC_PLUGIN_DIR',	plugin_dir_path( WPCC_PLUGIN_FILE ) );
-
-// Plugin Folder URL
-define( 'WPCC_PLUGIN_URL',	plugin_dir_url( WPCC_PLUGIN_FILE ) );
-
-
-/*
- * Load the main class for the core functionality
- */
-require_once WPCC_PLUGIN_DIR . 'core/class-wp-cloudflare-cache.php';
-
-/**
- * Run the main function
- */
-
-function wpcc_cloudflare_cache_run() {
-	
-	$wpcc_cache = new WP_Cloudflare_Cache();
+function cfca_cloudflare_cache_run() {
+	$cfca_cache = new CFCA_Cache();
 }
 
-wpcc_cloudflare_cache_run();
+cfca_cloudflare_cache_run();
