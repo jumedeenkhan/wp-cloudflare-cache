@@ -98,7 +98,9 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			
 			$request_uri = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
 			
-			if ( $this->get( 'bypass_sitemap', 'on' ) === 'on' && ( strcasecmp( $request_uri, "/sitemap_index.xml" ) === 0 || preg_match( "/[a-zA-Z0-9]-sitemap\.xml$/", $request_uri ) ) ) {
+			// Matches Yoast-style (post-sitemap.xml, sitemap_index.xml) and WP core's own (wp-sitemap.xml,
+			// wp-sitemap-posts-post-1.xml) sitemap URLs alike — anything ending in …sitemap….xml.
+			if ( $this->get( 'bypass_sitemap', 'on' ) === 'on' && preg_match( '/sitemap[^\/]*\.xml$/i', $request_uri ) ) {
 				header("Cache-Control: max-age=30");
 			}
 			
@@ -195,11 +197,19 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			
 			$site_hostname = str_replace('/', '', $site_hostname);
 			
-			// Remove subdomain, but keep apex domains (e.g. example.com) intact
-			$parts = explode( '.', $site_hostname );
-			
-			if ( count( $parts ) > 2 ) {
-				$site_hostname = implode( '.', array_slice( $parts, 1 ) );
+			// Remove subdomain, but keep the apex domain intact. Not a full public-suffix-list lookup, but
+			// covers the common two-part TLDs (co.uk, com.au, …) that a plain "drop the first label" rule
+			// would otherwise mangle, e.g. turning "example.co.uk" into just "co.uk".
+			$two_part_tlds = array( 'co.uk', 'org.uk', 'gov.uk', 'ac.uk', 'co.in', 'co.jp', 'co.nz', 'co.za', 'com.au', 'com.br', 'com.mx', 'co.kr', 'com.sg' );
+			$parts         = explode( '.', $site_hostname );
+			$suffix_len    = 1;
+
+			if ( count( $parts ) >= 2 && in_array( implode( '.', array_slice( $parts, -2 ) ), $two_part_tlds, true ) ) {
+				$suffix_len = 2;
+			}
+
+			if ( count( $parts ) > $suffix_len + 1 ) {
+				$site_hostname = implode( '.', array_slice( $parts, -( $suffix_len + 1 ) ) );
 			}
 			
 			return trim( $site_hostname );

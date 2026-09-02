@@ -1,15 +1,15 @@
 === WP Cloudflare Cache ===
 Contributors: jumedeenkhan
-Tags: cloudflare, cache, pagespeed, performance, cdn
+Tags: cloudflare, cloudflare cache, cloudflare page cache, cache everything, full page cache
 Donate link: https://buymeacoffee.com/jumedeenkhan
 Requires at least: 5.8
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Speed up your WordPress website via Cloudflare CDN with full-page caching – improve SEO, performance, and Core Web Vitals.
+Speed up your WordPress website via Cloudflare CDN with full-page caching – improve SEO, and overall performance.
 
 == Description ==
 
@@ -131,13 +131,29 @@ Saved Cloudflare credentials from older versions are migrated automatically when
 
 == Upgrade Notice ==
 
+= 1.6.0 =
+
+Bug-fix release: settings save, cache purging, and permission checks. Update recommended.
+
 = 1.5.0 =
 
 Major update introducing Cloudflare Cache Rules, API Token authentication, edge-level cache bypass, TTL controls, Cache Exclude URLs, and improved security and settings management.
 
 == Changelog ==
 
-= 1.5.0 =
+= 1.6.0 =
+
+* Fixed settings save skipping sanitization.
+* Fixed purge on permanent post deletion.
+* Fixed apex domain detection for .co.uk/.com.au style TLDs.
+* Broadened sitemap bypass to WordPress core sitemaps.
+* Fixed deactivation erasing saved configuration.
+* Tightened Reset Settings permission check.
+* Fixed admin bar purge button and API Token show/hide toggle.
+* Prevented duplicate purge/reset requests.
+* Redesigned settings notices into a single popup and refreshed the UI.
+
+= 1.5 =
 
 * Added Cloudflare API Token authentication alongside Global API Key support.
 * Added automatic Cloudflare domain selection.

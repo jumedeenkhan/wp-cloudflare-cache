@@ -103,6 +103,9 @@
 .cfca-btn[aria-busy="true"] {
     cursor: default;
     opacity: 0.85;
+    /* The purge/test/reset buttons are <a> tags: .prop('disabled') has no effect on them, so this is
+       what actually blocks a double-click firing a second request while one is already in flight. */
+    pointer-events: none;
 }
 
 .cfca-btn-primary {

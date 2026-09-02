@@ -42,7 +42,9 @@ class CFCA_Purge {
         add_action( 'delete_comment',            array($this, 'purge_cache_on_deleted'), PHP_INT_MAX );
 		
 		$purge_actions = array(
-            'deleted_post',
+            // before_delete_post, not deleted_post: by the time deleted_post fires the row is already
+            // gone from wp_posts, so get_post() below returns null and there's no permalink left to purge.
+            'before_delete_post',
             'wp_trash_post',
             'clean_post_cache',
             'edit_post',
@@ -142,7 +144,10 @@ class CFCA_Purge {
 		
 		if ( $post && $post != 'all' ) {
 
-			$page_url = get_permalink( $post->ID );
+			// get_permalink( $post ), not $post->ID: passing the object lets WP use its already-loaded fields
+			// directly instead of re-querying by ID — the only way this still resolves for a post that has
+			// been permanently deleted by the time this scheduled (2s-delayed) purge actually runs.
+			$page_url = get_permalink( $post );
 			
 			if ( filter_var( $page_url, FILTER_VALIDATE_URL ) ) {
 				$urls[] = substr( $page_url, -1 ) === '/' ? substr( $page_url, 0, -1 ) : $page_url;
@@ -292,24 +297,15 @@ class CFCA_Purge {
 		return true;
 	}
 	
-	/**
-	 * Creates the zone's Cache Rule (Rulesets API): a single rule that caches everything on this site's
-	 * host, EXCEPT requests excluded by its own expression (logged-in/comment/password cookies, wp-admin,
-	 * wp-login, and whatever Bypass/Exclude toggles are enabled in Settings). One rule with "not" conditions
-	 * avoids any rule-ordering ambiguity. GET-merge-PUT so any other Cache Rules on the account are untouched.
-	 * @param string $cf_zone_id
-	 * @return true|WP_Error
-	 */
 	public function setup_cache_rules( $cf_zone_id, $overrides = array() ) {
 		$marker   = 'CFCA - Cache Everything';
 		$endpoint = "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/rulesets/phases/http_request_cache_settings/entrypoint";
-		
-		$zones   = $this->list_zones( $overrides );
-		$domain  = $zones[ $cf_zone_id ] ?? $this->instance->get_only_domain();
+
+		$host    = wp_parse_url( home_url(), PHP_URL_HOST );
 		$rules   = $this->get_foreign_cache_rules( $endpoint, array( $marker ), $overrides );
 		$rules[] = array(
 			'description'       => $marker,
-			'expression'        => $this->build_cache_expression( $domain, $overrides ),
+			'expression'        => $this->build_cache_expression( $host, $overrides ),
 			'action'            => 'set_cache_settings',
 			'action_parameters' => $this->build_cache_action_parameters( $overrides ),
 		);
@@ -339,21 +335,13 @@ class CFCA_Purge {
 		return $params;
 	}
 	
-	/**
-	 * Builds the single Cache Rule expression: the selected zone's domain, minus every bypass condition that
-	 * must hold for a request to be cacheable. $overrides lets a settings save use its not-yet-persisted
-	 * values instead of stale ones still in the database.
-	 * @param string $domain    The zone's real domain name, used for the http.host match.
-	 * @param array  $overrides
-	 * @return string
-	 */
-	private function build_cache_expression( $domain, $overrides = array() ) {
+	private function build_cache_expression( $host, $overrides = array() ) {
 		$get = function ( $key, $default = '' ) use ( $overrides ) {
 			return $overrides[ $key ] ?? $this->instance->get( $key, $default );
 		};
 		
 		$conditions   = array();
-		$conditions[] = sprintf( 'http.host wildcard "%s*"', $domain );
+		$conditions[] = sprintf( 'http.host wildcard "%s*"', $host );
 		$conditions[] = 'not http.cookie contains "wordpress_logged_in_"';
 		$conditions[] = 'not http.cookie contains "comment_author_"';
 		$conditions[] = 'not http.cookie contains "wp-postpass_"';
@@ -437,14 +425,14 @@ class CFCA_Purge {
 		return true;
 	}
 	
+	// Only the live Cloudflare Cache Rule is cleaned up here; local settings (cfca_config/cfca_options)
+	// must survive a deactivate/reactivate cycle — uninstall.php is what wipes those, on actual removal.
 	public function deactivate_plugin() {
 		$cf_zone_id = $this->instance->get_single_config( 'cf_zone_id', '' );
 
 		if ( ! empty( $cf_zone_id ) && $this->has_credentials() ) {
 			$this->remove_cache_rules( $cf_zone_id );
 		}
-
-		delete_option('cfca_config');
 	}
 	
 	/**
@@ -523,27 +511,6 @@ class CFCA_Purge {
 			}
 		}
 		
-		return false;
-	}
-	
-	public function getZoneID( $domain ) {
-		
-		$result = wp_remote_get( "https://api.cloudflare.com/client/v4/zones", $this->get_api_headers() );
-		
-		if ( is_wp_error( $result ) ) {
-			return false;
-		}
-		
-		$arr_result = json_decode( wp_remote_retrieve_body( $result ), true );
-		
-		if ( ! empty( $arr_result['success'] ) && is_array( $arr_result['result'] ?? null ) ) {
-			foreach ($arr_result['result'] as $r) {
-				if ($r['name'] == $domain) {
-					return $r['id'];
-				}
-			}
-			return false;
-		}
 		return false;
 	}
 	

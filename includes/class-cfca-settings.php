@@ -436,9 +436,11 @@ class CFCA_Settings {
 	 */
 	public function cfca_reset_settings() {
 		check_ajax_referer( 'cfca_ajax_nonce', 'nonce' );
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		// manage_options, not edit_posts: this changes plugin configuration (same as Save Settings, and
+		// same as the page-level gate on cfca_settings_page()), unlike a mere cache purge.
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array(
-				'message' => __( 'You cannot edit posts.', 'wp-cloudflare-cache' ),
+				'message' => __( 'You do not have permission to do this.', 'wp-cloudflare-cache' ),
 				'type'    => 'error',
 			) );
 		}
