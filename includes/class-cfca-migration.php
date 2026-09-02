@@ -1,25 +1,23 @@
 <?php
+/**
+ * One-time carry-over from the pre-1.5 plugin's options and Page Rule into the current cfca_ plugin.
+ *
+ * @package CloudflareCache
+ */
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Class CFCA_Migration
- *
- * One-time carry-over from the pre-1.5 plugin (option names wpcc_options/wpcc_config, Global API Key only,
- * Cloudflare Page Rules) into the current cfca_ plugin. Also removes the old "Cache Everything" Page Rule,
- * since this version uses a Cache Rule instead. Runs silently when it succeeds; the only user-facing sign
- * is a warning notice, shown only if the carried-over credentials couldn't be verified against Cloudflare.
- * Future one-time upgrades can follow the same maybe_migrate() pattern.
- *
- * @package CloudflareCache
+ * One-time carry-over from the pre-1.5 plugin (wpcc_options/wpcc_config, Global API Key, Page Rules)
+ * into the current cfca_ plugin, and cleanup of the old Page Rule now that a Cache Rule is used instead.
  */
 class CFCA_Migration {
 
 	const NEEDS_ATTENTION_OPTION = 'cfca_migration_needs_attention';
 
 	/**
-	 * Registers the (conditional) admin notice. Safe to call on every request.
+	 * Registers the admin notice shown when migrated credentials couldn't be verified.
 	 */
 	public static function init() {
 		add_action( 'admin_notices', array( __CLASS__, 'maybe_render_notice' ) );
@@ -27,6 +25,7 @@ class CFCA_Migration {
 
 	/**
 	 * Runs once: only when the old plugin's options exist and the new ones don't yet.
+	 *
 	 * @param CFCA_Cache $instance
 	 */
 	public static function maybe_migrate( $instance ) {
@@ -39,14 +38,15 @@ class CFCA_Migration {
 	}
 
 	/**
-	 * Carries over email, Global API Key, and the settings that map cleanly to this version, sanitized the
-	 * same way a manual save would be (the old plugin never sanitized its stored values at all).
+	 * Carries over the old plugin's options into the new option names, sanitized.
+	 *
+	 * @param CFCA_Cache $instance
 	 */
 	private static function migrate_options( $instance ) {
 		$old = get_option( 'wpcc_options', array() );
 
 		$migrated = array(
-			'cf_auth_method'     => 'key', // the old plugin only ever supported the Global API Key.
+			'cf_auth_method'     => 'key', // old plugin used Key only.
 			'cf_email'           => sanitize_email( $old['cf_email'] ?? '' ),
 			'cf_api_key'         => sanitize_text_field( $old['cf_api_key'] ?? '' ),
 			'cf_api_token'       => '',
@@ -73,10 +73,9 @@ class CFCA_Migration {
 	}
 
 	/**
-	 * Best-effort: verifies the migrated credentials by fetching the zones list (also warms the Settings
-	 * page's domain dropdown), then deletes the old Page Rule if one was recorded. A Global API Key has
-	 * full account access, so this only fails when the key itself is no longer valid — in which case we
-	 * leave the old Page Rule alone and flag the site for the admin notice instead.
+	 * Verifies the migrated credentials via the zones list, then deletes the old Page Rule if recorded.
+	 *
+	 * @param CFCA_Cache $instance
 	 */
 	private static function cleanup_legacy_page_rule( $instance ) {
 		$purge = $instance->cachepurge;
@@ -116,8 +115,7 @@ class CFCA_Migration {
 	}
 
 	/**
-	 * The only user-facing part of this whole process: shown if the migrated credentials couldn't be
-	 * verified, until the site owner saves working ones.
+	 * Shown if the migrated credentials couldn't be verified, until working ones are saved.
 	 */
 	public static function maybe_render_notice() {
 		if ( ! get_option( self::NEEDS_ATTENTION_OPTION ) || ! current_user_can( 'manage_options' ) ) {

@@ -16,7 +16,9 @@ delete_option( 'cfca_options' );
 delete_option( 'cfca_config' );
 delete_option( 'cfca_migration_needs_attention' );
 
-// Legacy option names from before the cfca_ rename, in case this site was never reactivated since.
+/**
+ * Legacy option names from before the cfca_ rename, in case this site was never reactivated since.
+ */
 delete_option( 'wpcc_options' );
 delete_option( 'wpcc_config' );
 

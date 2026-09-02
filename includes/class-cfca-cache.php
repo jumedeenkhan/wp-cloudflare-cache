@@ -1,16 +1,16 @@
 <?php
+/**
+ * Cache-serving logic: sends Cache-Control headers and stores the plugin's Cloudflare zone config.
+ *
+ * @package CloudflareCache
+ */
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( ! class_exists( 'CFCA_Cache' ) ) :
 
 	/**
-	 * Main CFCA_Cache Class.
-	 *
-	 * @package		CloudflareCache
-	 * @subpackage	Classes/CFCA_Cache
-	 * @since		1.2
-	 * @author		Jumedeen Khan
+	 * Main plugin class: boots the other classes and owns the cfca_config option.
 	 */
 	class CFCA_Cache {
 
@@ -18,6 +18,9 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 		public $cachepurge;
 		private $config = false;
 		
+		/**
+		 * Boots hooks, sub-classes, and default config.
+		 */
 		public function __construct() {
 			$this->base_hooks();
 			$this->includes();
@@ -37,21 +40,25 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			CFCA_Migration::maybe_migrate( $this );
 		}
 		
+		/**
+		 * Loads the plugin's other class files.
+		 */
 		private function includes() {
 			require_once CFCA_PLUGIN_DIR . 'includes/class-cfca-settings.php';
 			require_once CFCA_PLUGIN_DIR . 'includes/class-cfca-purge.php';
 			require_once CFCA_PLUGIN_DIR . 'includes/class-cfca-migration.php';
 		}
 
+		/**
+		 * Registers the plugin's core hooks.
+		 */
 		private function base_hooks() {
 			add_action( 'init', array( $this, 'cfca_exclude_sitemap'), PHP_INT_MAX );		
 			add_action( 'send_headers', array( $this, 'cfca_custom_headers'), PHP_INT_MAX );
 		}
 		
 		/**
-		 * Sends Cache-Control with both max-age (respected by the visitor's browser) and s-maxage
-		 * (respected by Cloudflare's shared edge cache), then overrides both to no-cache for requests
-		 * that must never be cached.
+		 * Sends max-age (browser) and s-maxage (Cloudflare edge), forcing no-cache when required.
 		 */
 		public function cfca_custom_headers() {
 			
@@ -68,8 +75,9 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 		}
 		
 		/**
-		 * Checks the current request against the user-defined "Cache Exclude URLs" list.
-		 * @return bool True if the current URL starts with one of the excluded path prefixes (e.g. /cart/, /checkout/).
+		 * Checks the current URL against the Cache Exclude URLs setting.
+		 *
+		 * @return bool
 		 */
 		private function cfca_is_excluded_url() {
 			$exclude_urls = trim( (string) $this->get( 'cache_exclude_urls' ) );
@@ -90,6 +98,9 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			return false;
 		}
 		
+		/**
+		 * Shortens the Cache-Control max-age for sitemap and robots.txt requests.
+		 */
 		public function cfca_exclude_sitemap() {
 			
 			if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
@@ -98,8 +109,10 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			
 			$request_uri = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
 			
-			// Matches Yoast-style (post-sitemap.xml, sitemap_index.xml) and WP core's own (wp-sitemap.xml,
-			// wp-sitemap-posts-post-1.xml) sitemap URLs alike — anything ending in …sitemap….xml.
+			/**
+			 * Matches Yoast-style (post-sitemap.xml, sitemap_index.xml) and WP core's own (wp-sitemap.xml,
+			 * wp-sitemap-posts-post-1.xml) sitemap URLs alike, anything ending in sitemap....xml.
+			 */
 			if ( $this->get( 'bypass_sitemap', 'on' ) === 'on' && preg_match( '/sitemap[^\/]*\.xml$/i', $request_uri ) ) {
 				header("Cache-Control: max-age=30");
 			}
@@ -109,6 +122,9 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			}
 		}	
 
+        /**
+         * @return array Default cfca_config values.
+         */
         function get_default_config() {
 
             $config = array();
@@ -119,6 +135,11 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			 return $config;
 		}
 
+        /**
+         * @param string $name    Config key.
+         * @param mixed  $default Value to return if the key isn't set.
+         * @return mixed
+         */
         function get_single_config($name, $default = false) {
 
             if( !is_array($this->config) || !isset($this->config[$name]) )
@@ -131,6 +152,10 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 
         }
 
+        /**
+         * @param string $name  Config key.
+         * @param mixed  $value Value to store.
+         */
         function set_single_config($name, $value) {
 
             if( !is_array($this->config) ) {
@@ -144,12 +169,20 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			}
         }
 
+        /**
+         * Persists the in-memory config to the cfca_config option.
+         */
         function update_config() {
 
             update_option( 'cfca_config', $this->config );
 
         }
 
+        /**
+         * Loads the saved config into memory.
+         *
+         * @return bool False when there's no saved config yet.
+         */
         function init_config() {
 
             $this->config = get_option( 'cfca_config', false );
@@ -162,27 +195,39 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 
         }
 
+        /**
+         * @param array $config Config to replace the in-memory config with.
+         */
         function set_config( $config ) {
             $this->config = $config;
         }
 
+        /**
+         * @return array
+         */
         function get_config() {
             return $this->config;
         }
 
+        /**
+         * @return string
+         */
         function get_cf_email() {
 			
 			return $this->get('cf_email');
         }
 
+        /**
+         * @return string
+         */
         function get_cf_api_key() {
 			
 			return $this->get('cf_api_key');
         }
 		
 		/**
-		 * The domain this site's Cloudflare zone must match, always derived from the public-facing home_url()
-		 * (not site_url(), which can point at a different install path).
+		 * Apex domain derived from home_url() (not site_url()), used to find the matching Cloudflare zone.
+		 *
 		 * @return string
 		 */
 		function get_only_domain() {
@@ -197,9 +242,11 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			
 			$site_hostname = str_replace('/', '', $site_hostname);
 			
-			// Remove subdomain, but keep the apex domain intact. Not a full public-suffix-list lookup, but
-			// covers the common two-part TLDs (co.uk, com.au, …) that a plain "drop the first label" rule
-			// would otherwise mangle, e.g. turning "example.co.uk" into just "co.uk".
+			/**
+			 * Removes the subdomain but keeps the apex domain intact. Not a full public-suffix-list lookup,
+			 * but covers the common two-part TLDs (co.uk, com.au) that dropping only the first label would
+			 * otherwise mangle, e.g. turning "example.co.uk" into just "co.uk".
+			 */
 			$two_part_tlds = array( 'co.uk', 'org.uk', 'gov.uk', 'ac.uk', 'co.in', 'co.jp', 'co.nz', 'co.za', 'com.au', 'com.br', 'com.mx', 'co.kr', 'com.sg' );
 			$parts         = explode( '.', $site_hostname );
 			$suffix_len    = 1;
@@ -216,8 +263,8 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 		}
 		
 		/**
-		 * True when this site is running on "localhost", where home_url() can never match a real Cloudflare
-		 * zone name — so the domain the user picks from the dropdown is used as-is.
+		 * True on "localhost", where home_url() can never match a real Cloudflare zone name.
+		 *
 		 * @return bool
 		 */
 		function is_localhost() {
@@ -225,9 +272,9 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 		}
 		
 		/**
-		 * Browser Cache TTL choices — kept short (recommended 60-600s) since this only controls how long the
-		 * visitor's own browser holds a page before revalidating.
-		 * @return array Seconds (as string) => label.
+		 * Browser Cache TTL choices: how long the visitor's own browser holds a page before revalidating.
+		 *
+		 * @return array
 		 */
 		public static function get_browser_ttl_options() {
 			return array(
@@ -238,19 +285,19 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 				'600' => __( '10 minutes', 'wp-cloudflare-cache' ),
 				'1200' => __( '20 minutes', 'wp-cloudflare-cache' ),
 				'1800' => __( '30 minutes', 'wp-cloudflare-cache' ),
-				'3600' => __( '1 hours', 'wp-cloudflare-cache' ),
+				'3600' => __( '1 hour', 'wp-cloudflare-cache' ),
 				'7200' => __( '2 hours', 'wp-cloudflare-cache' ),
-				'1800' => __( '5 hours', 'wp-cloudflare-cache' ),
+				'18000' => __( '5 hours', 'wp-cloudflare-cache' ),
 				'43200' => __( '12 hours', 'wp-cloudflare-cache' ),
-				'86400' => __( '1 Day', 'wp-cloudflare-cache' ),
-				'172800' => __( '1 Days', 'wp-cloudflare-cache' ),
+				'86400' => __( '1 day', 'wp-cloudflare-cache' ),
+				'172800' => __( '2 days', 'wp-cloudflare-cache' ),
 			);
 		}
 		
 		/**
-		 * Edge Cache TTL choices — how long Cloudflare's own edge holds a page, kept between 2 hours and
-		 * 30 days since shorter/longer values rarely make sense for a full-page cache.
-		 * @return array Seconds (as string) => label.
+		 * Edge Cache TTL choices: how long Cloudflare's own edge holds a page before revalidating.
+		 *
+		 * @return array
 		 */
 		public static function get_edge_ttl_options() {
 			return array(
@@ -266,6 +313,12 @@ if ( ! class_exists( 'CFCA_Cache' ) ) :
 			);
 		}
 		
+		/**
+		 * @param string $option_name  Field to read.
+		 * @param mixed  $default      Value to return if the field isn't set.
+		 * @param string $section_name Option name the field lives under.
+		 * @return mixed
+		 */
 		public function get( $option_name, $default = '', $section_name = 'cfca_options' ) {
 			
 			$section_fields = get_option( $section_name );

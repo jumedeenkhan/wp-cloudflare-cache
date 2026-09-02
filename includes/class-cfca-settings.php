@@ -1,29 +1,33 @@
 <?php
+/**
+ * Renders and saves the plugin's admin settings page.
+ *
+ * @package CloudflareCache
+ */
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Class CFCA_Settings
- *
  * Renders and saves the plugin's admin settings page.
- *
- * @package		CloudflareCache
- * @subpackage	Classes/CFCA_Settings
- * @author		Jumedeen Khan
- * @since		1.2
  */
 class CFCA_Settings {
 
 	private $plugin_name;
 	private $instance;
 
+	/**
+	 * @param CFCA_Cache|null $instance
+	 */
 	function __construct( $instance = null ){
 		$this->init();
 		$this->plugin_name = CFCA_NAME;
 		$this->instance     = $instance;
 	}
 	
+	/**
+	 * Registers this class's hooks.
+	 */
 	private function init(){
 		
         add_action( 'admin_menu', array( $this, 'cfca_add_options_page' ) );
@@ -36,6 +40,9 @@ class CFCA_Settings {
 				   
 	}
 	
+    /**
+     * Adds the Settings > Cloudflare Cache admin page.
+     */
     public function cfca_add_options_page() {
         add_options_page(
 			'WP Cloudflare Cache',
@@ -46,6 +53,9 @@ class CFCA_Settings {
 		);
     }
 	
+    /**
+     * Registers the cfca_options setting and its sections/fields.
+     */
     public function cfca_register_settings() {
 		
 		register_setting(
@@ -86,6 +96,12 @@ class CFCA_Settings {
 		add_settings_field( 'cfca_reset_settings', 'Reset Settings', array( $this, 'cfca_cloudflare_reset_settings' ), 'cfca-admin', 'cfca_section_actions' );
     }
 	
+    /**
+     * Adds a Settings link to the plugin's row on the Plugins screen.
+     *
+     * @param array $links
+     * @return array
+     */
     public function cfca_links( $links ) {
 
             $settings_link = array(
@@ -95,6 +111,9 @@ class CFCA_Settings {
             return array_merge( $settings_link, $links );
     }
 	
+    /**
+     * Renders the Settings page markup.
+     */
     public function cfca_settings_page() {
 		
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -197,6 +216,9 @@ class CFCA_Settings {
 <?php
     }
 	
+	/**
+	 * Renders the Cloudflare Authentication section intro and connection status.
+	 */
 	public function cfca_section_auth_info() {
 		?>
 		<p class="cfca-description"><?php esc_html_e( 'Use either your Global API Key or a scoped API Token.', 'wp-cloudflare-cache' ); ?></p>
@@ -204,7 +226,12 @@ class CFCA_Settings {
 		$this->cfca_connection_status_html();
 	}
 
-	// Renders only #cfca-connection-status, so the AJAX save handler can refresh it without duplicating the static description above.
+	/**
+	 * Renders only #cfca-connection-status, so the AJAX save handler can refresh it without
+	 * duplicating the static description rendered by cfca_section_auth_info().
+	 *
+	 * @param string|null $zone_id_override
+	 */
 	public function cfca_connection_status_html( $zone_id_override = null ) {
 		$zone_id         = null !== $zone_id_override ? $zone_id_override : ( $this->instance ? $this->instance->get_single_config( 'cf_zone_id', '' ) : '' );
 		$has_credentials = $this->instance && $this->instance->cachepurge && $this->instance->cachepurge->has_credentials();
@@ -223,8 +250,8 @@ class CFCA_Settings {
 	}
 
 	/**
-	 * Warns when this site's hostname isn't proxied through Cloudflare (orange cloud), since caching can't
-	 * work at all otherwise. Skipped on localhost, where there's no real DNS record to check.
+	 * Warns when this site's hostname isn't proxied through Cloudflare. Skipped on localhost.
+	 *
 	 * @param string $zone_id
 	 */
 	private function cfca_dns_proxy_notice( $zone_id ) {
@@ -251,6 +278,9 @@ class CFCA_Settings {
 		}
 	}
 
+	/**
+	 * Renders the Authentication Method field.
+	 */
 	public function cfca_cloudflare_auth_method() {
 		$options = get_option( 'cfca_options' );
 		$method  = $options['cf_auth_method'] ?? 'token';
@@ -262,6 +292,9 @@ class CFCA_Settings {
 		<?php
 	}
 
+	/**
+	 * Renders the API Token field.
+	 */
 	public function cfca_cloudflare_token_value() {
 		$options = get_option( 'cfca_options' ); ?>
 		<div class="wp-pwd">
@@ -281,6 +314,9 @@ class CFCA_Settings {
 		<?php
 	}
 
+	/**
+	 * Renders the Cache Exclude URLs field.
+	 */
 	public function cfca_cloudflare_exclude_urls() {
 		$options = get_option( 'cfca_options' ); ?>
 		<textarea rows="4" cols="80" class="cfca-purge-url" name="cfca_options[cache_exclude_urls]" id="cfca-cache-exclude-urls"><?php echo esc_textarea( $options['cache_exclude_urls'] ?? '' ); ?></textarea>
@@ -288,9 +324,11 @@ class CFCA_Settings {
 		<?php
 	}
 
+	/**
+	 * Renders the Cloudflare Domain field.
+	 */
 	public function cfca_cloudflare_zone_domain() {
 		$saved_zone_id = $this->instance ? $this->instance->get_single_config( 'cf_zone_id', '' ) : '';
-		$expected      = $this->instance ? $this->instance->get_only_domain() : '';
 		$zones         = ( $this->instance && $this->instance->cachepurge ) ? $this->instance->cachepurge->get_cached_zones() : array();
 		?>
 		<div id="cfca-zone-domain-field">
@@ -313,6 +351,9 @@ class CFCA_Settings {
 		<?php
 	}
 
+	/**
+	 * Renders the Bypass Sitemap field.
+	 */
 	public function cfca_bypass_sitemap() {
 		$options = get_option( 'cfca_options' ); ?>
 		<label for="cfca-bypass-sitemap">
@@ -322,6 +363,9 @@ class CFCA_Settings {
 		<?php
 	}
 
+	/**
+	 * Renders the Bypass robots.txt field.
+	 */
 	public function cfca_bypass_robots() {
 		$options = get_option( 'cfca_options' ); ?>
 		<label for="cfca-bypass-robots">
@@ -331,12 +375,18 @@ class CFCA_Settings {
 		<?php
 	}
 
+	/**
+	 * Renders the E-mail Address field.
+	 */
 	public function cfca_cloudflare_email_value() {
 		$options = get_option('cfca_options'); ?>
          <input class="cfca-input cfca-input-mono" type="text" id="cfca-cf-email" name="cfca_options[cf_email]" value="<?php echo esc_attr( $options['cf_email'] ?? '' ); ?>">
      <?php
 	}
 	
+	/**
+	 * Renders the Global API Key field.
+	 */
 	public function cfca_cloudflare_key_value() {
 		$options = get_option('cfca_options'); ?>
 		<div class="wp-pwd">
@@ -349,6 +399,9 @@ class CFCA_Settings {
     <?php
 	}
 	
+	/**
+	 * Renders the Edge Cache-Control max-age field.
+	 */
 	public function cfca_cloudflare_maxage_value() {
 		$options = get_option('cfca_options'); ?>
                 <input class="cfca-input cfca-input-mono" type="number" id="cfca-expire" name="cfca_options[cf_maxage]" min="300" value="<?php echo esc_attr( $options['cf_maxage'] ?? '604800' ); ?>" required>
@@ -356,6 +409,9 @@ class CFCA_Settings {
     <?php
 	}
 
+	/**
+	 * Renders the Browser Cache max-age field.
+	 */
 	public function cfca_cloudflare_browser_maxage_value() {
 		$options = get_option('cfca_options'); ?>
                 <input class="cfca-input cfca-input-mono" type="number" id="cfca-browser-expire" name="cfca_options[cf_browser_maxage]" min="0" value="<?php echo esc_attr( $options['cf_browser_maxage'] ?? '650' ); ?>">
@@ -363,6 +419,9 @@ class CFCA_Settings {
     <?php
 	}
 
+	/**
+	 * Renders the Cloudflare Browser Cache TTL field.
+	 */
 	public function cfca_cloudflare_browser_ttl() {
 		$options = get_option('cfca_options');
 		$value   = $options['cf_browser_ttl'] ?? '300'; ?>
@@ -375,6 +434,9 @@ class CFCA_Settings {
 		<?php
 	}
 
+	/**
+	 * Renders the Cloudflare Edge Cache TTL field.
+	 */
 	public function cfca_cloudflare_edge_ttl() {
 		$options = get_option('cfca_options');
 		$value   = $options['cf_edge_ttl'] ?? ''; ?>
@@ -387,6 +449,9 @@ class CFCA_Settings {
 		<?php
 	}
 	
+	/**
+	 * Renders the Custom Purge URL field.
+	 */
 	public function cfca_cloudflare_purge_url_cache() {
 		$options = get_option('cfca_options'); ?>
                 <textarea type="textarea" rows="5" cols="80" class="cfca-purge-url" name="cfca_options[purge_urls]" id="cfca-purge-urls"><?php echo esc_textarea( $options['purge_urls'] ?? '' ); ?></textarea>
@@ -395,6 +460,9 @@ class CFCA_Settings {
     <?php
 	}
 	
+	/**
+	 * Renders the Purge Homepage on post or page update field.
+	 */
 	public function cfca_purge_homepage_on_update() {
 		$options = get_option('cfca_options'); ?>
          <label for="cfca-purge-homepage">
@@ -404,6 +472,9 @@ class CFCA_Settings {
 		<?php	
 	}
 	
+	/**
+	 * Renders the Purge On Comments field.
+	 */
 	public function cfca_purge_on_comments() {
 		$options = get_option('cfca_options'); ?>
          <label for="cfca-purge-on-comment">
@@ -413,6 +484,9 @@ class CFCA_Settings {
 		<?php	
 	}
 	
+	/**
+	 * Renders the Purge Entire Cache button.
+	 */
 	public function cfca_cloudflare_purge_everything() {
 		?>
          <p class="cfca-description">
@@ -421,6 +495,9 @@ class CFCA_Settings {
     <?php
 	}
 	
+	/**
+	 * Renders the Test Your Config button.
+	 */
 	public function cfca_cloudflare_test_config() {
 		?>
        <p class="cfca-description">
@@ -430,14 +507,15 @@ class CFCA_Settings {
 	}
 
 	/**
-	 * Restores every setting to its default, except the saved Cloudflare credentials and domain selection.
-	 * Going through update_option() re-runs sanitize_cfca_options(), which also re-syncs the live Cloudflare
-	 * rule/TTLs to match the restored defaults.
+	 * AJAX handler: restores every setting to its default except the saved Cloudflare credentials
+	 * and domain selection.
 	 */
 	public function cfca_reset_settings() {
 		check_ajax_referer( 'cfca_ajax_nonce', 'nonce' );
-		// manage_options, not edit_posts: this changes plugin configuration (same as Save Settings, and
-		// same as the page-level gate on cfca_settings_page()), unlike a mere cache purge.
+		/**
+		 * manage_options, not edit_posts: this changes plugin configuration (same as Save Settings,
+		 * and same as the page-level gate on cfca_settings_page()), unlike a mere cache purge.
+		 */
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array(
 				'message' => __( 'You do not have permission to do this.', 'wp-cloudflare-cache' ),
@@ -454,9 +532,9 @@ class CFCA_Settings {
 			'cf_api_token'       => $current['cf_api_token'] ?? '',
 			'zone_domain'        => $this->instance ? $this->instance->get_single_config( 'cf_zone_id', '' ) : '',
 			'cf_maxage'          => 604800,
-			'cf_browser_maxage'  => 300,
-			'cf_browser_ttl'     => '',
-			'cf_edge_ttl'        => 7200,
+			'cf_browser_maxage'  => 650,
+			'cf_browser_ttl'     => 300,
+			'cf_edge_ttl'        => '',
 			'purge_urls'         => '',
 			'cache_exclude_urls' => '',
 			'purge_homepage'     => '',
@@ -473,6 +551,9 @@ class CFCA_Settings {
 		) );
 	}
 
+	/**
+	 * AJAX handler: saves the settings form.
+	 */
 	public function cfca_save_settings() {
 		check_ajax_referer( 'cfca_ajax_nonce', 'nonce' );
 
@@ -483,14 +564,17 @@ class CFCA_Settings {
 			) );
 		}
 
-		// Goes through sanitize_cfca_options() directly: this AJAX action bypasses options.php, so
-		// register_setting()'s sanitize callback never runs on its own — without this call, the domain
-		// selection is never persisted and the Cloudflare Cache Rule/TTL sync never fires.
+		/**
+		 * update_option() already runs sanitize_cfca_options() via the sanitize_option_cfca_options
+		 * filter that register_setting() sets up; calling it again here would double every
+		 * Cloudflare API call.
+		 */
 		$posted = isset( $_POST['cfca_options'] ) ? wp_unslash( $_POST['cfca_options'] ) : array();
-		$clean  = $this->sanitize_cfca_options( $posted );
-		update_option( 'cfca_options', $clean );
+		update_option( 'cfca_options', $posted );
 
-		// Highest-priority settings_errors() type wins: error > warning > success.
+		/**
+		 * Highest-priority settings_errors() type wins: error, then warning, then success.
+		 */
 		$type    = 'success';
 		$message = __( 'Settings saved.', 'wp-cloudflare-cache' );
 
@@ -527,6 +611,9 @@ class CFCA_Settings {
 		wp_send_json_success( $payload );
 	}
 
+	/**
+	 * Renders the Reset Settings button.
+	 */
 	public function cfca_cloudflare_reset_settings() {
 		?>
        <p class="cfca-description">
@@ -535,6 +622,11 @@ class CFCA_Settings {
 		<?php
 	}
 	
+	/**
+	 * Adds the "Purge CF Cache" admin bar button.
+	 *
+	 * @param WP_Admin_Bar $admin_bar
+	 */
 	public function cfca_admin_bar_menu_button( $admin_bar ) {
 		if ( is_admin() && current_user_can( 'edit_posts' ) ) {
 			$admin_bar->add_menu([
@@ -547,8 +639,8 @@ class CFCA_Settings {
 	
 
 	/**
-	 * Sanitizes all plugin options. The selected Cloudflare domain is stored as-is — picking the right
-	 * domain from the dropdown is the site owner's call, not something this plugin second-guesses.
+	 * Sanitizes all plugin options. The selected Cloudflare domain is stored as-is.
+	 *
 	 * @param array $value Raw posted option values.
 	 * @return array
 	 */
@@ -578,26 +670,37 @@ class CFCA_Settings {
 			$this->instance->update_config();
 		}
 
-		// $clean holds the values being saved right now — get_option( 'cfca_options' ) still returns the old,
-		// pre-save data until after this callback returns, so every method below takes $clean as an explicit
-		// override instead of re-reading (possibly stale) credentials from the database mid-save.
+		/**
+		 * $clean holds the values being saved right now, get_option( 'cfca_options' ) still returns the
+		 * old, pre-save data until after this callback returns, so every method below takes $clean as an
+		 * explicit override instead of re-reading (possibly stale) credentials from the database mid-save.
+		 */
 		$purge           = $this->instance ? $this->instance->cachepurge : null;
 		$has_credentials = $purge && $purge->has_credentials( $clean );
 		$zone_id         = $selected_zone_id ?: ( $this->instance ? $this->instance->get_single_config( 'cf_zone_id', '' ) : '' );
 
 		if ( $has_credentials ) {
-			// Refresh the cached zones list so the domain dropdown never has to call the API on page load.
+			/**
+			 * Refreshes the cached zones list so the domain dropdown never has to call the API on page load.
+			 */
 			$purge->refresh_zones_cache( $clean );
 			
-			// Valid credentials were saved manually, so any migration notice about unverified legacy credentials no longer applies.
+			/**
+			 * Valid credentials were saved manually, so any migration notice about unverified legacy
+			 * credentials no longer applies.
+			 */
 			delete_option( 'cfca_migration_needs_attention' );
 		}
 
-		// The "enter your credentials" / "select your domain" states are already shown inline right under the
-		// Authentication section (see cfca_section_auth_info()), so only a real Cloudflare API failure needs a
-		// top-of-page notice here.
+		/**
+		 * The "enter your credentials" / "select your domain" states are already shown inline under the
+		 * Authentication section (see cfca_section_auth_info()), so only a real Cloudflare API failure
+		 * needs a top-of-page notice here.
+		 */
 		if ( $purge && $has_credentials && $zone_id ) {
-			// Keep the live Cloudflare Cache Rule and TTLs in sync with these settings every time they're saved.
+			/**
+			 * Keeps the live Cloudflare Cache Rule and TTLs in sync with these settings on every save.
+			 */
 			$sync_result = $purge->setup_cache_rules( $zone_id, $clean );
 
 			if ( ! is_wp_error( $sync_result ) ) {
@@ -605,8 +708,10 @@ class CFCA_Settings {
 			}
 
 			if ( is_wp_error( $sync_result ) ) {
-				// 'warning', not the add_settings_error() default of 'error': the settings themselves saved fine,
-				// only the live Cloudflare sync failed, so cfca_save_settings() must not report this as a failed save.
+				/**
+				 * 'warning', not the add_settings_error() default of 'error': the settings themselves
+				 * saved fine, only the live Cloudflare sync failed.
+				 */
 				add_settings_error( 'cfca_options', 'cfca_cache_rule_sync_failed', sprintf(
 					/* translators: %s: error message */
 					__( 'Settings saved, but Cloudflare could not be updated: %s', 'wp-cloudflare-cache' ),
@@ -618,19 +723,25 @@ class CFCA_Settings {
 		return $clean;
 	}
 
+	/**
+	 * Renders the Cache Control section intro.
+	 */
 	public function cfca_section_cache_control_info() {
 		?>
 		<p class="cfca-description"><?php esc_html_e( 'The Cache-Control header this site sends with every page.', 'wp-cloudflare-cache' ); ?></p>
 		<?php
 	}
 
+	/**
+	 * Empty section callback for sections that need no intro text.
+	 */
 	public function cfca_section_info() {
 	
 	}
 	
 	/**
-	 * Loads the plugin's admin CSS in the head and its JS in the footer, only on wp-admin pages
-	 * that actually need it (our settings page, plus every page for the toolbar purge button).
+	 * Loads the admin CSS/JS only where needed: the settings page, plus every page for the toolbar button.
+	 *
 	 * @param string $hook Current admin page hook suffix.
 	 */
 	public function cfca_enqueue_admin_assets( $hook ) {
@@ -641,8 +752,10 @@ class CFCA_Settings {
 			return;
 		}
 		
-		// No dependency on core's password-toggle script: it looks up the input via id/name "pwd",
-		// which our fields don't use (each has its own unique id) — cfca-admin.js handles the toggle itself.
+		/**
+		 * No dependency on core's password-toggle script: it looks up the input via id/name "pwd", which
+		 * our fields don't use (each has its own unique id); cfca-admin.js handles the toggle itself.
+		 */
 		$js = CFCA_PLUGIN_DIR . 'assets/js/cfca-admin.js';
 		wp_enqueue_script( $this->plugin_name, CFCA_PLUGIN_URL . 'assets/js/cfca-admin.js', array( 'jquery' ), (string) filemtime( $js ), true );
 		wp_localize_script( $this->plugin_name, 'cfca_ajax', array(
@@ -650,6 +763,9 @@ class CFCA_Settings {
 		) );
 	}		   
 
+	/**
+	 * @return string
+	 */
 	public function get_plugin_name(){
 		return apply_filters( 'cfca/settings/get_plugin_name', $this->plugin_name );
 	}

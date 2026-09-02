@@ -1,11 +1,11 @@
 === WP Cloudflare Cache ===
 Contributors: jumedeenkhan
-Tags: cloudflare, cloudflare cache, cloudflare page cache, cache everything, full page cache
+Tags: cloudflare, cache, pagespeed, performance, cdn
 Donate link: https://buymeacoffee.com/jumedeenkhan
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -131,6 +131,14 @@ Saved Cloudflare credentials from older versions are migrated automatically when
 
 == Upgrade Notice ==
 
+= 1.8.0 =
+
+Fixes a duplicate-setting bug that ran Cloudflare sync twice per save, plus TTL label fixes.
+
+= 1.7.0 =
+
+Broader cookie/URL bypass matching for a more reliable cache. Update recommended.
+
 = 1.6.0 =
 
 Bug-fix release: settings save, cache purging, and permission checks. Update recommended.
@@ -140,6 +148,18 @@ Bug-fix release: settings save, cache purging, and permission checks. Update rec
 Major update introducing Cloudflare Cache Rules, API Token authentication, edge-level cache bypass, TTL controls, Cache Exclude URLs, and improved security and settings management.
 
 == Changelog ==
+
+= 1.8.0 =
+
+* Fixed settings save running Cloudflare sync twice.
+* Fixed duplicate/incorrect Browser Cache TTL labels.
+* Fixed Reset Settings defaults to match actual defaults.
+* Improved code documentation.
+
+= 1.7.0 =
+
+* Broadened bypass cookies to "wordpress" and "comment_" prefixes.
+* Added /wp-json bypass.
 
 = 1.6.0 =
 

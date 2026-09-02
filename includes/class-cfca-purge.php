@@ -1,17 +1,15 @@
 <?php
+/**
+ * Handles all Cloudflare API calls: cache purging, cache rule setup, zone lookups.
+ *
+ * @package CloudflareCache
+ */
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Class CFCA_Purge
- *
  * Handles all Cloudflare API calls: cache purging, cache rule setup, zone lookups.
- *
- * @package		CloudflareCache
- * @subpackage	Classes/CFCA_Purge
- * @author		Jumedeen Khan
- * @since		1.2
  */
 class CFCA_Purge {
 	
@@ -21,6 +19,11 @@ class CFCA_Purge {
     private $zone_id      = '';
     private $page_rule_id = '';
 
+	/**
+	 * @param string     $cf_email  Saved Cloudflare account email (Global API Key auth).
+	 * @param string     $cf_api_key Saved Cloudflare Global API Key.
+	 * @param CFCA_Cache $instance
+	 */
 	function __construct($cf_email, $cf_api_key, $instance) {
 		$this->init();
 		$this->instance = $instance;
@@ -32,6 +35,9 @@ class CFCA_Purge {
 		
 	}
 
+	/**
+	 * Registers this class's hooks.
+	 */
 	private function init() {
 		
 		add_action( 'wp_ajax_cfca_purge_everything', array( $this, 'cfca_purge_everything' ) );
@@ -41,9 +47,11 @@ class CFCA_Purge {
         add_action( 'comment_post',              array($this, 'purge_cache_on_added'), PHP_INT_MAX, 3 );
         add_action( 'delete_comment',            array($this, 'purge_cache_on_deleted'), PHP_INT_MAX );
 		
+		/**
+		 * before_delete_post, not deleted_post: by the time deleted_post fires the row is already gone
+		 * from wp_posts, so get_post() below returns null and there's no permalink left to purge.
+		 */
 		$purge_actions = array(
-            // before_delete_post, not deleted_post: by the time deleted_post fires the row is already
-            // gone from wp_posts, so get_post() below returns null and there's no permalink left to purge.
             'before_delete_post',
             'wp_trash_post',
             'clean_post_cache',
@@ -62,6 +70,11 @@ class CFCA_Purge {
 		add_action('cfca_purge_cache', array($this, 'cfca_run_scheduled_purge'), 10, 1);
 	}
 	
+	/**
+	 * @param int     $post_ID
+	 * @param WP_Post $post
+	 * @param bool    $update
+	 */
 	public function cfca_wp_insert_post( $post_ID, $post, $update ) {
 		if ( wp_is_post_revision( $post_ID ) || wp_is_post_autosave( $post_ID ) ) {
 			return;
@@ -69,15 +82,28 @@ class CFCA_Purge {
 		wp_schedule_single_event( time() + 2, 'cfca_purge_cache', [ $post ] );
 	}
 	
+	/**
+	 * @param string  $new_status
+	 * @param string  $old_status
+	 * @param WP_Post $post
+	 */
 	public function cfca_post_updated( $new_status, $old_status, $post ) {
 		wp_schedule_single_event( time() + 2, 'cfca_purge_cache', [ $post ] );
 	}
 	
+	/**
+	 * @param int $post_id
+	 */
 	public  function cfca_purge_cache_via_id( $post_id ) {
 		$post = get_post( $post_id );
 		wp_schedule_single_event( time() + 2, 'cfca_purge_cache', [ $post ] );
 	}
 	
+	/**
+	 * @param int   $comment_ID
+	 * @param mixed $comment_approved
+	 * @param array $commentdata
+	 */
 	public function purge_cache_on_added( $comment_ID, $comment_approved, $commentdata ) {
 		
 		if ( $this->instance->get('purge_on_comment') == 'on' ) {
@@ -88,6 +114,11 @@ class CFCA_Purge {
 		}
 	}
 	
+	/**
+	 * @param string     $new_status
+	 * @param string     $old_status
+	 * @param WP_Comment $comment
+	 */
 	public function purge_cache_on_approved($new_status, $old_status, $comment) {
 		
 		if ( $this->instance->get('purge_on_comment') == 'on' ) {
@@ -99,6 +130,9 @@ class CFCA_Purge {
 		
 	} 
 	
+	/**
+	 * @param int $comment_ID
+	 */
 	public function purge_cache_on_deleted( $comment_ID ) {
 		
 		if ( $this->instance->get('purge_on_comment') == 'on' ) {
@@ -111,8 +145,8 @@ class CFCA_Purge {
 	}
 
 	/**
-	 * Runs the scheduled (cron-triggered) purge and logs any failure, since this happens in the background
-	 * with no AJAX response for the user to see.
+	 * Runs the cron-triggered purge and logs failures, since there's no AJAX response to show them in.
+	 *
 	 * @param mixed $post
 	 */
 	public function cfca_run_scheduled_purge( $post = null ) {
@@ -124,6 +158,10 @@ class CFCA_Purge {
 		}
 	}
 	
+	/**
+	 * @param WP_Post|string|null $post A post to purge, or 'all' to purge everything.
+	 * @return object|WP_Error
+	 */
 	public function purge_cache( $post = null ) {
 		
 		if ( empty( $post ) ) {
@@ -178,7 +216,9 @@ class CFCA_Purge {
 				}
 			}
 			
-			// Cloudflare's purge_cache endpoint accepts at most 30 URLs per request.
+			/**
+			 * Cloudflare's purge_cache endpoint accepts at most 30 URLs per request.
+			 */
 			$data = [ 'files' => array_slice( array_unique( $urls ), 0, 30 ) ];
 		}
 		
@@ -213,7 +253,11 @@ class CFCA_Purge {
 		];
 	}   	
 	
-	// Sends a purge_cache() result (WP_Error or {message}) as { success, data: { message, type } }.
+	/**
+	 * Sends a purge_cache() result as { success, data: { message, type } }.
+	 *
+	 * @param object|WP_Error $result
+	 */
 	private function cfca_send_purge_result( $result ) {
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array(
@@ -228,6 +272,9 @@ class CFCA_Purge {
 		) );
 	}
 
+	/**
+	 * AJAX handler: purges the entire Cloudflare cache for this zone.
+	 */
 	public function cfca_purge_everything() {
 		check_ajax_referer( 'cfca_ajax_nonce', 'nonce' );
 		if ( ! current_user_can( 'edit_posts' ) ) {
@@ -240,6 +287,9 @@ class CFCA_Purge {
 		$this->cfca_send_purge_result( $this->purge_cache( 'all' ) );
 	}
 	
+	/**
+	 * AJAX handler: purges the latest published post, to test the connection end to end.
+	 */
 	public function cfca_purge_test_config() {
 		check_ajax_referer( 'cfca_ajax_nonce', 'nonce' );
 		if ( ! current_user_can( 'edit_posts' ) ) {
@@ -266,8 +316,8 @@ class CFCA_Purge {
 	
 	
 	/**
-	 * Sets the zone-wide Browser Cache TTL (how long visitors' browsers keep the response), independent
-	 * of the per-rule Edge Cache TTL.
+	 * Sets the zone-wide Browser Cache TTL, independent of the per-rule Edge Cache TTL.
+	 *
 	 * @param string $cf_zone_id
 	 * @param int    $seconds 0 for "Respect Existing Headers".
 	 * @param array  $overrides
@@ -297,12 +347,19 @@ class CFCA_Purge {
 		return true;
 	}
 	
+	/**
+	 * Creates or updates this plugin's Cache Rule for the given zone.
+	 *
+	 * @param string $cf_zone_id
+	 * @param array  $overrides
+	 * @return true|WP_Error
+	 */
 	public function setup_cache_rules( $cf_zone_id, $overrides = array() ) {
-		$marker   = 'CFCA - Cache Everything';
+		$marker   = '[DO NOT EDIT] CFCA - Cache Everything';
 		$endpoint = "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/rulesets/phases/http_request_cache_settings/entrypoint";
 
 		$host    = wp_parse_url( home_url(), PHP_URL_HOST );
-		$rules   = $this->get_foreign_cache_rules( $endpoint, array( $marker ), $overrides );
+		$rules   = $this->get_foreign_cache_rules( $endpoint, array( $marker, 'CFCA - Cache Everything' ), $overrides );
 		$rules[] = array(
 			'description'       => $marker,
 			'expression'        => $this->build_cache_expression( $host, $overrides ),
@@ -314,8 +371,8 @@ class CFCA_Purge {
 	}
 	
 	/**
-	 * Builds the Cache Rule's action_parameters: cache on, plus an Edge Cache TTL override when the
-	 * "Edge Cache TTL" setting isn't "Respect Existing Headers".
+	 * Builds the Cache Rule's action_parameters (cache on, plus Edge Cache TTL override if set).
+	 *
 	 * @param array $overrides
 	 * @return array
 	 */
@@ -335,6 +392,13 @@ class CFCA_Purge {
 		return $params;
 	}
 	
+	/**
+	 * Builds the Cache Rule's match expression: this host, minus every bypass condition.
+	 *
+	 * @param string $host
+	 * @param array  $overrides
+	 * @return string
+	 */
 	private function build_cache_expression( $host, $overrides = array() ) {
 		$get = function ( $key, $default = '' ) use ( $overrides ) {
 			return $overrides[ $key ] ?? $this->instance->get( $key, $default );
@@ -342,11 +406,12 @@ class CFCA_Purge {
 		
 		$conditions   = array();
 		$conditions[] = sprintf( 'http.host wildcard "%s*"', $host );
-		$conditions[] = 'not http.cookie contains "wordpress_logged_in_"';
-		$conditions[] = 'not http.cookie contains "comment_author_"';
+		$conditions[] = 'not http.cookie contains "wordpress"';
+		$conditions[] = 'not http.cookie contains "comment_"';
 		$conditions[] = 'not http.cookie contains "wp-postpass_"';
 		$conditions[] = 'not http.request.uri.path contains "/wp-admin"';
 		$conditions[] = 'not http.request.uri.path contains "/wp-login"';
+		$conditions[] = 'not http.request.uri.path contains "/wp-json"';
 		
 		if ( 'on' === $get( 'bypass_sitemap', 'on' ) ) {
 			$conditions[] = 'not http.request.uri.path contains ".xml"';
@@ -369,21 +434,24 @@ class CFCA_Purge {
 	}
 	
 	/**
-	 * Removes only the Cache Rule this plugin created (matched by description), leaving any others intact.
+	 * Removes only the Cache Rule this plugin created (matched by description), leaving others intact.
+	 *
 	 * @param string $cf_zone_id
 	 * @return true|WP_Error
 	 */
 	public function remove_cache_rules( $cf_zone_id ) {
 		$endpoint = "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/rulesets/phases/http_request_cache_settings/entrypoint";
-		$rules    = $this->get_foreign_cache_rules( $endpoint, array( 'CFCA - Cache Everything' ) );
+		$rules    = $this->get_foreign_cache_rules( $endpoint, array( '[DO NOT EDIT] CFCA - Cache Everything', 'CFCA - Cache Everything' ) );
 		
 		return $this->put_cache_rules( $endpoint, $rules );
 	}
 	
 	/**
 	 * Fetches the zone's cache-settings ruleset, minus any rules matching the given descriptions.
+	 *
 	 * @param string $endpoint
 	 * @param array  $markers_to_strip Rule descriptions to exclude from the returned list.
+	 * @param array  $overrides
 	 * @return array
 	 */
 	private function get_foreign_cache_rules( $endpoint, $markers_to_strip, $overrides = array() ) {
@@ -404,6 +472,12 @@ class CFCA_Purge {
 		return $rules;
 	}
 	
+	/**
+	 * @param string $endpoint
+	 * @param array  $rules
+	 * @param array  $overrides
+	 * @return true|WP_Error
+	 */
 	private function put_cache_rules( $endpoint, $rules, $overrides = array() ) {
 		$cf_headers           = $this->get_api_headers( $overrides );
 		$cf_headers['method'] = 'PUT';
@@ -425,8 +499,10 @@ class CFCA_Purge {
 		return true;
 	}
 	
-	// Only the live Cloudflare Cache Rule is cleaned up here; local settings (cfca_config/cfca_options)
-	// must survive a deactivate/reactivate cycle — uninstall.php is what wipes those, on actual removal.
+	/**
+	 * Only the live Cloudflare Cache Rule is cleaned up here; local settings (cfca_config/cfca_options)
+	 * must survive a deactivate/reactivate cycle, uninstall.php is what wipes those, on actual removal.
+	 */
 	public function deactivate_plugin() {
 		$cf_zone_id = $this->instance->get_single_config( 'cf_zone_id', '' );
 
@@ -436,8 +512,8 @@ class CFCA_Purge {
 	}
 	
 	/**
-	 * Zones list read from cache (stored in cfca_config) so the Settings page never blocks on a live
-	 * Cloudflare request while rendering. Refreshed by refresh_zones_cache(), called on every settings save.
+	 * Zones list read from cache, so the Settings page never blocks on a live Cloudflare request.
+	 *
 	 * @return array Zone ID => zone name.
 	 */
 	public function get_cached_zones() {
@@ -445,7 +521,9 @@ class CFCA_Purge {
 	}
 	
 	/**
-	 * Fetches the zones list live and stores it for get_cached_zones() to read without an API round-trip.
+	 * Fetches the zones list live and stores it for get_cached_zones() to read.
+	 *
+	 * @param array $overrides
 	 * @return array Zone ID => zone name.
 	 */
 	public function refresh_zones_cache( $overrides = array() ) {
@@ -455,6 +533,10 @@ class CFCA_Purge {
 		return $zones;
 	}
 	
+	/**
+	 * @param array $overrides
+	 * @return array Zone ID => zone name.
+	 */
 	public function list_zones( $overrides = array() ) {
 		if ( ! $this->has_credentials( $overrides ) ) {
 			return array();
@@ -483,8 +565,8 @@ class CFCA_Purge {
 	}
 	
 	/**
-	 * Whether the given hostname has at least one DNS record (A/AAAA/CNAME) proxied through Cloudflare
-	 * (the orange cloud). Caching cannot work at all if traffic isn't routed through Cloudflare's proxy.
+	 * Whether the hostname has at least one DNS record proxied through Cloudflare (the orange cloud).
+	 *
 	 * @param string $cf_zone_id
 	 * @param string $hostname
 	 * @return bool|null True/false when known, null when it couldn't be determined.
@@ -515,8 +597,9 @@ class CFCA_Purge {
 	}
 	
 	/**
-	 * Builds the request headers for the currently selected authentication method (API Token or Global API Key).
-	 * @param array $overrides Values from an in-progress settings save, preferred over the (possibly stale) database.
+	 * Builds the request headers for the currently selected authentication method (Token or Key).
+	 *
+	 * @param array $overrides
 	 * @return array
 	 */
 	public function get_api_headers( $overrides = array() ) {
@@ -542,7 +625,8 @@ class CFCA_Purge {
 	
 	/**
 	 * Whether enough Cloudflare credentials are filled in for the selected authentication method.
-	 * @param array $overrides Values from an in-progress settings save, preferred over the (possibly stale) database.
+	 *
+	 * @param array $overrides
 	 * @return bool
 	 */
 	public function has_credentials( $overrides = array() ) {
