@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:   WP Cloudflare Cache
+ * Plugin Name:   Cloudflare Page Cache for WordPress
  * Plugin URI:    https://www.mozedia.com/
  * Description:   WP Cloudflare Cache built for cache HTML Pages on Cloudflare free plan and purge cache only when post or page updated.
- * Version:       1.2
+ * Version:       1.2.1
  * Author:        Jumedeen Khan
  * Author URI:    https://www.mozedia.com/about
  * Text Domain:   wp-cloudflare-cache
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 define( 'WPCC_NAME', 'WP Cloudflare Cache' );
 
 // Plugin version
-define( 'WPCC_VERSION',		'1.2' );
+define( 'WPCC_VERSION',		'1.2.1' );
 
 // Plugin Root File
 define( 'WPCC_PLUGIN_FILE',	__FILE__ );

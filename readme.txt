@@ -1,11 +1,11 @@
-=== WP Cloudflare Cache ===
+=== Cloudflare Page Cache for WordPress ===
 Contributors: jumedeenkhan
 Tags: cloudflare, cloudflare cache, cloudflare page cache, improve speed, improve performance
 Donate link: https://www.paypal.me/jumedeenkhan
 Requires at least: 4.7
 Tested up to: 6.5.3
 Requires PHP: 5.6
-Stable tag: 1.2
+Stable tag: 1.2.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -111,6 +111,9 @@ So this plugin offer you use Cloudflare cache for HTML pages without affecting s
 
 == Changelog ==
 
+= 1.2.1 =
+* Change licence details
+
 = 1.2 =
 * Added new homepage purge button.
 * Add option exclude custom URLs.
@@ -135,6 +138,9 @@ So this plugin offer you use Cloudflare cache for HTML pages without affecting s
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+Change licence details
 
 = 1.2 =
 Added new homepage purge button.
