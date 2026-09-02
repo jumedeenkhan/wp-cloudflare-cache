@@ -3,7 +3,7 @@
 Plugin Name:  WP Cloudflare Cache
 Plugin URI:   https://www.mozedia.com/cloudflare-cache-everything/
 Description:  Use Cloudflare full page cache and improve your site performance.
-Version:      1.0.0
+Version:      1.0.1
 Author:       Jumedeen Khan
 Author URI:   https://www.mozedia.com/
 Text Domain:  wp-cloudflare-cache

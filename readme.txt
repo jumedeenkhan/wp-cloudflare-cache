@@ -5,7 +5,7 @@ Donate link: https://www.paypal.me/jumedeenkhan
 Requires at least: 4.0
 Tested up to: 5.3
 Requires PHP: 5.6
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 
 WP Cloudflare cache plugin build for control cloudflare cache and purge only single page cache when post publish, updated and new comment are added.
 
@@ -92,12 +92,14 @@ So this plugin offer you use cloudflare full cache without affecting site new po
 
 == Screenshots ==
 
+1. WP Cloudflare Cache Plugin Settings
+
 == Changelog ==
 
-= 1.0.0 =
+= 1.0.1 =
 * change max-age value to control only cloudflare cache.
 
-= 1.0.0 =
+= 1.0 =
 * Initial release.
 
 == Upgrade Notice ==
