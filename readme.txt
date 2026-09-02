@@ -92,14 +92,12 @@ So this plugin offer you use cloudflare full cache without affecting site new po
 
 == Screenshots ==
 
-1. WP Cloudflare Cache Plugin Settings
-
 == Changelog ==
 
-= 1.0.1 =
+= 1.0.0 =
 * change max-age value to control only cloudflare cache.
 
-= 1.0 =
+= 1.0.0 =
 * Initial release.
 
 == Upgrade Notice ==
